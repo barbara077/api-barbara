@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API REST — CEP</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0d0f14;
+      --surface: #151820;
+      --surface2:#1a1e2a;
+      --border:  #232733;
+      --text:    #c8cdd8;
+      --muted:   #565d72;
+      --white:   #f0f2f7;
+      --green:   #3dffa0;
+      --blue:    #5b9cf6;
+      --orange:  #ff8c42;
+      --red:     #ff5f5f;
+      --yellow:  #ffd166;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      padding: 0 1.5rem 4rem;
+    }
+
+    header {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3.5rem 0 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--green);
+      border: 1px solid var(--green);
+      border-radius: 2px;
+      padding: 0.2em 0.6em;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.1;
+      margin-bottom: 0.7rem;
+    }
+    h1 span { color: var(--green); }
+
+    header p { color: var(--muted); font-size: 0.82rem; line-height: 1.7; }
+
+    main { max-width: 860px; margin: 0 auto; }
+    section { margin-top: 2.5rem; }
+
+    h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ── tabs ── */
+    .tabs {
+      display: flex;
+      gap: 0.3rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:hover { color: var(--white); }
+    .tab-btn.active { color: var(--white); border-bottom-color: var(--green); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── form ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .form-row.full { grid-template-columns: 1fr; }
+
+    label {
+      display: block;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--white);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      padding: 0.55rem 0.8rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus { border-color: var(--green); }
+    input::placeholder { color: var(--muted); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: none;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.6rem 1.4rem;
+      cursor: pointer;
+      transition: opacity .15s;
+      margin-top: 0.5rem;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-green  { background: var(--green);  color: #0d0f14; }
+    .btn-blue   { background: var(--blue);   color: #0d0f14; }
+    .btn-red    { background: var(--red);    color: #0d0f14; }
+    .btn-muted  { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── response box ── */
+    .response-box {
+      margin-top: 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .response-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    .status-badge {
+      font-weight: 700;
+      font-size: 0.72rem;
+      padding: 0.15em 0.6em;
+      border-radius: 3px;
+    }
+    .s-2xx { background: rgba(61,255,160,.12); color: var(--green); }
+    .s-4xx { background: rgba(255,95,95,.12);  color: var(--red);   }
+    .s-5xx { background: rgba(255,95,95,.12);  color: var(--red);   }
+
+    .response-pre {
+      padding: 1rem 1.2rem;
+      font-size: 0.8rem;
+      line-height: 1.8;
+      overflow-x: auto;
+      min-height: 60px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ── table ── */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    td {
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    tr:hover td { background: var(--surface2); }
+
+    .tag-method {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2em 0.55em;
+      border-radius: 3px;
+    }
+    .tag-get    { color: var(--green);  background: rgba(61,255,160,.08); }
+    .tag-post   { color: var(--blue);   background: rgba(91,156,246,.08); }
+    .tag-delete { color: var(--red);    background: rgba(255,95,95,.08);  }
+
+    .url-cell em { font-style: normal; color: var(--yellow); }
+
+    /* ── spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      max-width: 860px;
+      margin: 4rem auto 0;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">v1.0 · PHP + MySQL · REST</div>
+    <h1>API REST <span>CEP</span></h1>
+    <p>
+      Base URL: <strong style="color:var(--white)">http://localhost/api-cep/api/cep.php</strong><br>
+      Consulta, cadastro e remoção de CEPs via HTTP · Retorno em JSON
+    </p>
+  </header>
+
+  <main>
+
+    <!-- TESTER -->
+    <section>
+      <h2>Testar endpoints</h2>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="get">GET</button>
+        <button class="tab-btn" data-tab="post">POST</button>
+        <button class="tab-btn" data-tab="delete">DELETE</button>
+      </div>
+
+      <!-- GET -->
+      <div class="tab-panel active" id="tab-get">
+        <div class="form-row">
+          <div>
+            <label>CEP (deixe vazio para listar todos)</label>
+            <input id="get-cep" type="text" placeholder="ex: 01310-100" maxlength="9" />
+          </div>
+        </div>
+        <button class="btn btn-green" id="btn-get">▶ Executar GET</button>
+        <div class="response-box" id="res-get" style="display:none">
+          <div class="response-header">
+            <span id="res-get-url">—</span>
+            <span class="status-badge" id="res-get-status"></span>
+          </div>
+          <pre class="response-pre" id="res-get-body"></pre>
+        </div>
+      </div>
+
+      <!-- POST -->
+      <div class="tab-panel" id="tab-post">
+        <div class="form-row">
+          <div>
+            <label>CEP *</label>
+            <input id="post-cep" type="text" placeholder="13010-111" maxlength="9" />
+          </div>
+          <div>
+            <label>Estado * (2 letras)</label>
+            <input id="post-estado" type="text" placeholder="SP" maxlength="2" />
+          </div>
+        </div>
+        <div class="form-row full">
+          <div>
+            <label>Rua *</label>
+            <input id="post-rua" type="text" placeholder="Rua Treze de Maio" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Bairro</label>
+            <input id="post-bairro" type="text" placeholder="Centro" />
+          </div>
+          <div>
+            <label>Cidade *</label>
+            <input id="post-cidade" type="text" placeholder="Campinas" />
+          </div>
+        </div>
+        <button class="btn btn-blue" id="btn-post">▶ Executar POST</button>
+        <div class="response-box" id="res-post" style="display:none">
+          <div class="response-header">
+            <span>POST /api/cep.php</span>
+            <span class="status-badge" id="res-post-status"></span>
+          </div>
+          <pre class="response-pre" id="res-post-body"></pre>
+        </div>
+      </div>
+
+      <!-- DELETE -->
+      <div class="tab-panel" id="tab-delete">
+        <div class="form-row">
+          <div>
+            <label>CEP para remover *</label>
+            <input id="del-cep" type="text" placeholder="ex: 13010-111" maxlength="9" />
+          </div>
+        </div>
+        <button class="btn btn-red" id="btn-delete">▶ Executar DELETE</button>
+        <div class="response-box" id="res-delete" style="display:none">
+          <div class="response-header">
+            <span id="res-del-url">—</span>
+            <span class="status-badge" id="res-delete-status"></span>
+          </div>
+          <pre class="response-pre" id="res-delete-body"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENDPOINTS TABLE -->
+    <section>
+      <h2>Endpoints disponíveis</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Método</th>
+              <th>URL</th>
+              <th>Descrição</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag-method tag-get">GET</span></td>
+              <td class="url-cell">/api/cep.php</td>
+              <td>Lista todos os CEPs</td>
+            </tr>
+            <tr>
+              <td><span class="tag-method tag-get">GET</span></td>
+              <td class="url-cell">/api/cep.php?cep=<em>01310-100</em></td>
+              <td>Busca um CEP específico</td>
+            </tr>
+            <tr>
+              <td><span class="tag-method tag-post">POST</span></td>
+              <td class="url-cell">/api/cep.php <em>+ body JSON</em></td>
+              <td>Cadastra novo CEP</td>
+            </tr>
+            <tr>
+              <td><span class="tag-method tag-delete">DELETE</span></td>
+              <td class="url-cell">/api/cep.php?cep=<em>01310-100</em></td>
+              <td>Remove um CEP</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <span>API REST · CEP · PHP + MySQL + PDO</span>
+    <span>Testar também via Postman · Thunder Client · curl</span>
+  </footer>
+
+  <script>
+    const BASE = 'api/cep.php';
+
+    // ── tabs ──
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    function setStatus(el, code) {
+      el.textContent = code;
+      el.className = 'status-badge';
+      if (code >= 200 && code < 300) el.classList.add('s-2xx');
+      else el.classList.add('s-4xx');
+    }
+
+    function colorJson(obj) {
+      const s = JSON.stringify(obj, null, 2);
+      return s
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*")\s*:/g,
+          '<span style="color:var(--blue)">$1</span>:')
+        .replace(/"([^"]+)"(?!\s*:)/g,
+          '<span style="color:var(--green)">"$1"</span>')
+        .replace(/\b(\d+)\b/g,
+          '<span style="color:var(--orange)">$1</span>');
+    }
+
+    // ── GET ──
+    document.getElementById('btn-get').addEventListener('click', async () => {
+      const cep = document.getElementById('get-cep').value.trim();
+      const url = cep ? `${BASE}?cep=${encodeURIComponent(cep)}` : BASE;
+      document.getElementById('res-get-url').textContent = 'GET ' + url;
+      document.getElementById('res-get-body').innerHTML = '<span class="spinner"></span>';
+      document.getElementById('res-get').style.display = '';
+
+      try {
+        const r = await fetch(url);
+        const data = await r.json();
+        setStatus(document.getElementById('res-get-status'), r.status);
+        document.getElementById('res-get-body').innerHTML = colorJson(data);
+      } catch (e) {
+        document.getElementById('res-get-body').textContent = 'Erro: ' + e.message + '\n\nVerifique se o servidor PHP está rodando.';
+        setStatus(document.getElementById('res-get-status'), 0);
+      }
+    });
+
+    // ── POST ──
+    document.getElementById('btn-post').addEventListener('click', async () => {
+      const body = {
+        cep:    document.getElementById('post-cep').value.trim(),
+        rua:    document.getElementById('post-rua').value.trim(),
+        bairro: document.getElementById('post-bairro').value.trim(),
+        cidade: document.getElementById('post-cidade').value.trim(),
+        estado: document.getElementById('post-estado').value.trim(),
+      };
+
+      document.getElementById('res-post-body').innerHTML = '<span class="spinner"></span>';
+      document.getElementById('res-post').style.display = '';
+
+      try {
+        const r = await fetch(BASE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await r.json();
+        setStatus(document.getElementById('res-post-status'), r.status);
+        document.getElementById('res-post-body').innerHTML = colorJson(data);
+      } catch (e) {
+        document.getElementById('res-post-body').textContent = 'Erro: ' + e.message;
+        setStatus(document.getElementById('res-post-status'), 0);
+      }
+    });
+
+    // ── DELETE ──
+    document.getElementById('btn-delete').addEventListener('click', async () => {
+      const cep = document.getElementById('del-cep').value.trim();
+      const url = `${BASE}?cep=${encodeURIComponent(cep)}`;
+      document.getElementById('res-del-url').textContent = 'DELETE ' + url;
+      document.getElementById('res-delete-body').innerHTML = '<span class="spinner"></span>';
+      document.getElementById('res-delete').style.display = '';
+
+      try {
+        const r = await fetch(url, { method: 'DELETE' });
+        const data = await r.json();
+        setStatus(document.getElementById('res-delete-status'), r.status);
+        document.getElementById('res-delete-body').innerHTML = colorJson(data);
+      } catch (e) {
+        document.getElementById('res-delete-body').textContent = 'Erro: ' + e.message;
+        setStatus(document.getElementById('res-delete-status'), 0);
+      }
+    });
+  </script>
+</body>
+</html>
